@@ -19,6 +19,7 @@ done
 
 # Rename sample.env
 cp sample.env .env
+nano .env
 
 # Backup original files
 mkdir -p org-file
