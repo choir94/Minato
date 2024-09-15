@@ -2,7 +2,9 @@
 
 # Generate jwt.txt
 openssl rand -hex 32 > jwt.txt
-
+# Create directory
+mkdir minato
+cd minato
 # Download and rename files
 declare -A files=(
     ["minato-genesis.json"]="https://docs.soneium.org/assets/files/minato-genesis-5e5db79442a6436778e9c3c80a9fd80d.json"
