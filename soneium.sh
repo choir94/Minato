@@ -57,6 +57,9 @@ echo "Docker and Docker Compose installation completed successfully."
 echo "Please log out and log back in to apply Docker group changes."
 
 
+curl -s https://raw.githubusercontent.com/choir94/Airdropguide/refs/heads/main/logo.sh | bash
+
+sleep 2
 # Generate jwt.txt
 openssl rand -hex 32 > jwt.txt
 # Create directory
