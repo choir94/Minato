@@ -44,14 +44,6 @@ curl -s https://raw.githubusercontent.com/choir94/Airdropguide/refs/heads/main/l
 
 sleep 2
 
-# Generate a 32-byte hexadecimal string and save to jwt.txt
-echo "Generating a 32-byte hex string and saving to jwt.txt..."
-openssl rand -hex 32 > jwt.txt
-
-# Display the generated JWT key
-echo "Generated JWT key:"
-cat jwt.txt
-
 # Create the minato folder
 echo "Creating the minato directory..."
 mkdir -p minato
@@ -69,6 +61,14 @@ for file in "${!files[@]}"; do
     wget -q "${files[$file]}" -O "${file}"
 done
 
+# Generate a 32-byte hexadecimal string and save to jwt.txt
+echo "Generating a 32-byte hex string and saving to jwt.txt..."
+openssl rand -hex 32 > jwt.txt
+
+# Display the generated JWT key
+echo "Generated JWT key:"
+cat jwt.txt
+
 # Rename sample.env to .env in the minato directory
 echo "Renaming sample.env to .env in minato directory..."
 cp minato/sample.env minato/.env
@@ -83,7 +83,7 @@ cp minato/minato-rollup.json org-file/org-minato-rollup.json
 
 # Navigate to the minato directory
 echo "Navigating to the minato directory..."
-cd minato || { echo "Failed to navigate to minato directory"; exit 1; }
+cd minato
 
 # Script complete
 echo "All steps completed successfully!"
