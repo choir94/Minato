@@ -40,6 +40,10 @@ sudo apt-get install -y docker-compose-plugin
 echo "Checking Docker Compose version..."
 docker compose version
 
+curl -s https://raw.githubusercontent.com/choir94/Airdropguide/refs/heads/main/logo.sh | bash
+
+sleep 2
+
 # Generate a 32-byte hexadecimal string and save to jwt.txt
 echo "Generating a 32-byte hex string and saving to jwt.txt..."
 openssl rand -hex 32 > jwt.txt
@@ -48,30 +52,40 @@ openssl rand -hex 32 > jwt.txt
 echo "Generated JWT key:"
 cat jwt.txt
 
-# Download and rename files
+# Create the minato folder
+echo "Creating the minato directory..."
+mkdir -p minato
+
+# Download and rename files into minato
 echo "Downloading and renaming files..."
 declare -A files=(
-    ["minato-genesis.json"]="https://docs.soneium.org/assets/files/minato-genesis-5e5db79442a6436778e9c3c80a9fd80d.json"
-    ["docker-compose.yml"]="https://docs.soneium.org/assets/files/docker-compose-003749bd470bb0677fb5b8e2a82103ed.yml"
-    ["minato-rollup.json"]="https://docs.soneium.org/assets/files/minato-rollup-6d00cc672bf6c8e9c14e3244e36a2790.json"
-    ["sample.env"]="https://docs.soneium.org/assets/files/sample-4ab2cad1f36b3166b45ce4d8fed821ab.env"
+    ["minato/minato-genesis.json"]="https://docs.soneium.org/assets/files/minato-genesis-5e5db79442a6436778e9c3c80a9fd80d.json"
+    ["minato/docker-compose.yml"]="https://docs.soneium.org/assets/files/docker-compose-003749bd470bb0677fb5b8e2a82103ed.yml"
+    ["minato/minato-rollup.json"]="https://docs.soneium.org/assets/files/minato-rollup-6d00cc672bf6c8e9c14e3244e36a2790.json"
+    ["minato/sample.env"]="https://docs.soneium.org/assets/files/sample-4ab2cad1f36b3166b45ce4d8fed821ab.env"
 )
 
 for file in "${!files[@]}"; do
     wget -q "${files[$file]}" -O "${file}"
 done
 
-# Rename sample.env to .env
-echo "Renaming sample.env to .env..."
-cp sample.env .env
+# Rename sample.env to .env in the minato directory
+echo "Renaming sample.env to .env in minato directory..."
+cp minato/sample.env minato/.env
 
 # Backup original files
 echo "Backing up original files..."
 mkdir -p org-file
-mv sample.env org-file/sample.env
-cp minato-genesis.json org-file/org-minato-genesis.json
-cp docker-compose.yml org-file/org-docker-compose.yml
-cp minato-rollup.json org-file/org-minato-rollup.json
+mv minato/sample.env org-file/sample.env
+cp minato/minato-genesis.json org-file/org-minato-genesis.json
+cp minato/docker-compose.yml org-file/org-docker-compose.yml
+cp minato/minato-rollup.json org-file/org-minato-rollup.json
+
+# Navigate to the minato directory
+echo "Navigating to the minato directory..."
+cd minato || { echo "Failed to navigate to minato directory"; exit 1; }
 
 # Script complete
 echo "All steps completed successfully!"
+# Provide the link to join the Airdrop Node discussion
+echo "Join the Airdrop Node discussion: https://t.me/airdrop_node"
