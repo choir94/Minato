@@ -44,6 +44,14 @@ curl -s https://raw.githubusercontent.com/choir94/Airdropguide/refs/heads/main/l
 
 sleep 2
 
+# Generate a 32-byte hexadecimal string and save to jwt.txt
+echo "Generating a 32-byte hex string and saving to jwt.txt..."
+openssl rand -hex 32 > jwt.txt
+
+# Display the generated JWT key
+echo "Generated JWT key:"
+cat jwt.txt
+
 # Create the minato folder
 echo "Creating the minato directory..."
 mkdir -p minato
@@ -60,14 +68,6 @@ declare -A files=(
 for file in "${!files[@]}"; do
     wget -q "${files[$file]}" -O "${file}"
 done
-
-# Generate a 32-byte hexadecimal string and save to jwt.txt
-echo "Generating a 32-byte hex string and saving to jwt.txt..."
-openssl rand -hex 32 > jwt.txt
-
-# Display the generated JWT key
-echo "Generated JWT key:"
-cat jwt.txt
 
 # Rename sample.env to .env in the minato directory
 echo "Renaming sample.env to .env in minato directory..."
