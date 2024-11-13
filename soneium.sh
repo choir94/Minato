@@ -1,91 +1,104 @@
 #!/bin/bash
 
-# Update package list
-echo "Updating package list..."
-sudo apt-get update
-
-# Install required packages
-echo "Installing ca-certificates and curl..."
-sudo apt-get install -y ca-certificates curl
-
-# Create the keyrings directory
-echo "Creating /etc/apt/keyrings directory..."
-sudo install -m 0755 -d /etc/apt/keyrings
-
-# Download the Docker GPG key
-echo "Downloading Docker GPG key..."
-sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
-
-# Add read permission to the GPG key
-echo "Setting permissions for Docker GPG key..."
-sudo chmod a+r /etc/apt/keyrings/docker.asc
-
-# Add Docker repository to Apt sources
-echo "Adding Docker repository to Apt sources..."
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-
-# Update package list again
-echo "Updating package list again..."
-sudo apt-get update
-
-# Install Docker packages
-echo "Installing Docker packages..."
-sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-
-# Install docker-compose-plugin explicitly (optional if already installed)
-echo "Installing docker-compose-plugin..."
-sudo apt-get install -y docker-compose-plugin
-
-# Display Docker Compose version
-echo "Checking Docker Compose version..."
-docker compose version
-
+# Skrip instalasi logo
 curl -s https://raw.githubusercontent.com/choir94/Airdropguide/refs/heads/main/logo.sh | bash
+sleep 5
 
-sleep 2
+# Function to check if a package is installed
+check_and_install() {
+    if ! dpkg -s "$1" &> /dev/null; then
+        echo "Installing $1..."
+        sudo apt install -y "$1" || { echo "Failed to install $1"; exit 1; }
+    else
+        echo "$1 is already installed."
+    fi
+}
 
-# Generate a 32-byte hexadecimal string and save to jwt.txt
-echo "Generating a 32-byte hex string and saving to jwt.txt..."
-openssl rand -hex 32 > jwt.txt
+# Update and install necessary packages
+echo "Updating system and installing essential packages..."
+sudo apt update && sudo apt upgrade -y
+check_and_install curl
+check_and_install git
+check_and_install jq
+check_and_install build-essential
+check_and_install gcc
+check_and_install unzip
+check_and_install wget
+check_and_install lz4
 
-# Display the generated JWT key
-echo "Generated JWT key:"
-cat jwt.txt
+# Install Docker using the official Docker installation script
+echo "Installing Docker..."
+if ! command -v docker &> /dev/null; then
+    curl -fsSL https://get.docker.com | bash || { echo "Docker installation failed"; exit 1; }
+    sudo usermod -aG docker "$USER"
+    echo "Docker installed. Please log out and log back in for the changes to take effect."
+else
+    echo "Docker is already installed."
+fi
 
-# Create the minato folder
-echo "Creating the minato directory..."
-mkdir -p minato
+# Check Docker version
+echo "Checking Docker version..."
+docker --version || { echo "Docker not found"; exit 1; }
 
-# Download and rename files into minato
-echo "Downloading and renaming files..."
-declare -A files=(
-    ["minato/minato-genesis.json"]="https://docs.soneium.org/assets/files/minato-genesis-5e5db79442a6436778e9c3c80a9fd80d.json"
-    ["minato/docker-compose.yml"]="https://docs.soneium.org/assets/files/docker-compose-003749bd470bb0677fb5b8e2a82103ed.yml"
-    ["minato/minato-rollup.json"]="https://docs.soneium.org/assets/files/minato-rollup-6d00cc672bf6c8e9c14e3244e36a2790.json"
-    ["minato/sample.env"]="https://docs.soneium.org/assets/files/sample-4ab2cad1f36b3166b45ce4d8fed821ab.env"
-)
+# Install Docker Compose
+echo "Installing Docker Compose..."
+if ! command -v docker-compose &> /dev/null; then
+    sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    sudo chmod +x /usr/local/bin/docker-compose || { echo "Failed to install Docker Compose"; exit 1; }
+else
+    echo "Docker Compose is already installed."
+fi
 
-for file in "${!files[@]}"; do
-    wget -q "${files[$file]}" -O "${file}"
-done
+# Clone the Soneium repository and navigate to the minato directory
+echo "Cloning Soneium repository..."
+git clone https://github.com/Soneium/soneium-node.git || { echo "Failed to clone Soneium repository"; exit 1; }
+cd soneium-node/minato || { echo "Directory not found"; exit 1; }
 
-# Rename sample.env to .env in the minato directory
-echo "Renaming sample.env to .env in minato directory..."
-cp minato/sample.env minato/.env
+# Generate JWT secret
+echo "Generating JWT secret..."
+openssl rand -hex 32 > jwt.txt || { echo "Failed to generate JWT secret"; exit 1; }
+echo "JWT secret saved to jwt.txt"
 
-# Backup original files
-echo "Backing up original files..."
-mkdir -p org-file
-mv minato/sample.env org-file/sample.env
-cp minato/minato-genesis.json org-file/org-minato-genesis.json
-cp minato/docker-compose.yml org-file/org-docker-compose.yml
-cp minato/minato-rollup.json org-file/org-minato-rollup.json
+# Rename sample.env to .env
+echo "Renaming sample.env to .env..."
+mv sample.env .env || { echo "Failed to rename sample.env"; exit 1; }
 
-# Navigate to the minato directory
-echo "Navigating to the minato directory..."
-cd minato
+# Prompt user for RPC details
+echo "Please enter the following RPC details:"
+read -p "L1_URL: " L1_URL
+read -p "L1_BEACON: " L1_BEACON
+read -p "P2P_ADVERTISE_IP (leave blank to auto-detect): " P2P_ADVERTISE_IP
 
-# Script complete
-echo "All steps completed successfully!"
-# Provide the link to join the Airdrop Node discussion
-echo "Join the Airdrop Node discussion: https://t.me/airdrop_node"
+# Auto-detect IP if not provided
+if [ -z "$P2P_ADVERTISE_IP" ]; then
+    P2P_ADVERTISE_IP=$(curl -s https://ipinfo.io/ip) || { echo "Failed to auto-detect IP"; exit 1; }
+    echo "Detected IP: $P2P_ADVERTISE_IP"
+fi
+
+# Update .env file with RPC details
+echo "Configuring .env file with RPC details..."
+sed -i "s|^L1_URL=.*|L1_URL=$L1_URL|" .env
+sed -i "s|^L1_BEACON=.*|L1_BEACON=$L1_BEACON|" .env
+sed -i "s|^P2P_ADVERTISE_IP=.*|P2P_ADVERTISE_IP=$P2P_ADVERTISE_IP|" .env
+
+# Modify docker-compose.yml to use P2P_ADVERTISE_IP in command arguments
+echo "Configuring docker-compose.yml with P2P_ADVERTISE_IP..."
+sed -i "s|<your_node_public_ip>|$P2P_ADVERTISE_IP|" docker-compose.yml
+
+# Add additional options to the service command in docker-compose.yml
+sed -i "/command:/a \      --rollup.disabletxpoolgossip=false --rpc.allow-unprotected-txs=true --nat=extip:$P2P_ADVERTISE_IP --override.fjord=1730106000 --override.granite=1730106000 --db.engine=pebble --state.scheme=hash" docker-compose.yml
+
+# Start Docker Compose
+echo "Starting Docker Compose..."
+docker-compose up -d || { echo "Docker Compose failed to start"; exit 1; }
+
+# Check service status
+echo "Checking status of services..."
+docker-compose ps || { echo "Failed to retrieve service status"; exit 1; }
+
+# Tail logs for the main services
+echo "Displaying logs for op-node-minato..."
+docker-compose logs -f op-node-minato &
+
+echo "Displaying logs for op-geth-minato..."
+docker-compose logs -f op-geth-minato &
