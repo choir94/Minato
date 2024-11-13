@@ -1,7 +1,5 @@
 #!/bin/bash
-# Skrip instalasi logo
-curl -s https://raw.githubusercontent.com/choir94/Airdropguide/refs/heads/main/logo.sh | bash
-sleep 5
+
 # Function to check if a package is installed
 check_and_install() {
     if ! dpkg -s "$1" &> /dev/null; then
@@ -73,13 +71,16 @@ sed -i "s|^L1_URL=.*|L1_URL=$L1_URL|" .env
 sed -i "s|^L1_BEACON=.*|L1_BEACON=$L1_BEACON|" .env
 sed -i "s|^P2P_ADVERTISE_IP=.*|P2P_ADVERTISE_IP=$P2P_ADVERTISE_IP|" .env
 
-# Modify docker-compose.yml to use P2P_ADVERTISE_IP in command arguments
-echo "Configuring docker-compose.yml with P2P_ADVERTISE_IP..."
-sed -i "s|<your_node_public_ip>|$P2P_ADVERTISE_IP|" docker-compose.yml
+# Automatically retrieve the public IP of the VPS
+NODE_PUBLIC_IP=$(curl -s https://api.ipify.org)
 
-# Modify docker-compose.yml to correctly pass command arguments as list
-echo "Configuring docker-compose.yml command..."
-sed -i "s|command:|command: ['your_main_command', '--rollup.disabletxpoolgossip=false', '--rpc.allow-unprotected-txs=true', '--nat=extip:$P2P_ADVERTISE_IP', '--override.fjord=1730106000', '--override.granite=1730106000', '--db.engine=pebble', '--state.scheme=hash']|" docker-compose.yml
+echo "Detected public IP: $NODE_PUBLIC_IP"
+
+# Replace <your_node_public_ip> in the docker-compose.yml file with the detected public IP
+echo "Configuring docker-compose.yml with node public IP..."
+
+# Replace placeholder with the detected node public IP
+sed -i "s|<your_node_public_ip>|$NODE_PUBLIC_IP|" docker-compose.yml
 
 # Start Docker Compose
 echo "Starting Docker Compose..."
