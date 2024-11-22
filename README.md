@@ -26,4 +26,7 @@
 
 -- diskusi channel https://t.me/airdrop_node
 
+## Support
+https://trakteer.id/AirdropNode/tip
+
 
